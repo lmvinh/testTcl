@@ -1,0 +1,39 @@
+redirect temp/congestion.rpt "reportCongestion -hotSpot -3d -overflow -num_hotspot 100 -include"
+set fr [open "./temp/congestion.rpt" r]
+set file_data [read -nonewline $fr];close $fr
+set data [split $file_data "\n"]
+set flag  0
+set total_list []
+foreach line $data {
+    if {[lindex $line 0] == "Local"} {
+        set flag 1
+    }
+    if {$flag == 1 && [llength $line] == 11} {
+        set local_list_1 []
+        set local_list_2 []
+        lappend local_list_1 [lindex $line 4]     
+        lappend local_list_1 [lindex $line 5]         
+        lappend local_list_1 [lindex $line 6]         
+        lappend local_list_1 [lindex $line 7]         
+        lappend local_list_2 $local_list_1
+        lappend local_list_2 [lindex $line 9]
+        lappend total_list $local_list_2
+    }
+}
+puts "The Highest congestion is [lindex [lindex $total_list 0] 1], the boundary value you wish to create Maker ^-^"
+gets stdin value
+    for {set i 0} {$i < [llength $total_list]} {incr i} {
+        set cur [lindex $total_list $i]
+        if {[lindex $cur 1] >= $value} {
+            createMarker -bbox [lindex $cur 0] -type Congestion
+        }
+    }
+    
+for {set i 0} {$i < 5} {incr i} {
+    set cur [lindex $total_list $i]
+    highlight [dbGet top.markers {.userType == "Congestion" && .box == [dbShape [lindex $cur 0]] }] -index 36
+}
+for {set i 0} {$i < 1} {incr i} {
+    set cur [lindex $total_list $i]
+    highlight [dbGet top.markers {.userType == "Congestion" && .box == [dbShape [lindex $cur 0]] }] -index 37
+} 
